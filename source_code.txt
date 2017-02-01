@@ -1,0 +1,2835 @@
+.MODEL SMALL
+.STACK	100H
+.data
+counter dw 0
+count db 1 
+column dw 0
+row dw 0 
+r dw 75,75,75,195,195,195,315,315,315
+clm dw 95,270,425,95,270,425,95,270,425  
+flag dw 9 dup(0) 
+output db 0 
+win db 0 
+valid db 0 
+adder dw 0 
+first db 0
+asc db 0
+colo db 0
+uprow dw 0
+drow dw 0
+ps db 10 dup("PLAY$")
+exs db 10 dup("EXIT$")
+p1 db 10 dup("1 PLAYER$")
+p2 db 10 dup("2 PLAYERS$")
+mr dw 0
+mc dw 0 
+sen1 db 20 dup("Who goes first?$")
+sen2 db 10 dup("You$")
+sen3 db 10 dup("Computer$")
+
+draw_cross macro  row,column 
+    
+;draw line
+
+
+	mov ah,0002h
+int 33h 
+	MOV	AH,0CH		;write pixel
+	MOV	AL,12		;fg color
+	int 10h
+	
+    mov dx,row
+    mov cx, column
+    call cross1
+    mov dx, row
+    mov cx,column
+    add cx,65
+    call cross2   
+endm 
+
+.CODE
+MAIN	PROC 
+    
+    
+    mov ax,@data
+    mov ds, ax  
+    
+
+	mov AH, 0   ; graphics mode
+    mov AX, 12h
+    int 10h
+    
+    ;cover         
+    mov ah,11
+    mov bh,0
+    mov bl,0
+    int 10h
+    
+    mov uprow,20
+    mov drow,150
+    call river
+    
+    call dela
+    call dela
+    
+    mov row,30
+    mov column,80 
+    mov bl,1
+    call tick
+    mov row,31
+    mov column,81
+    call tick 
+    
+    call dela
+    call dela
+    call dela
+             
+	mov uprow,170
+    mov drow,300
+    call river
+    
+    call dela 
+    call dela
+    call dela
+    
+    mov row,180
+    mov column,70
+    mov bl,0
+    call tack
+    mov row,181
+    mov column,71
+    call tack
+    
+    call dela
+    call dela 
+    call dela
+    
+    mov uprow,320
+    mov drow,450
+    call river
+    
+    call dela
+    call dela
+    call dela 
+    
+    mov row,330
+    mov column,120
+    mov bl,0
+    call toe 
+    mov row,331
+    mov column,121
+    call toe
+    call dela
+    call dela
+    call dela
+             
+    mov bx,0
+    delay1:
+    cmp bx,200
+    je menu 
+    call dela
+    inc bx 
+    jmp delay1 
+    
+    
+    menu: 
+     mov AH, 0   ; graphics mode
+    mov AX, 12h
+    int 10h
+
+    MOV  AH, 11  ;function  OBh 
+    MOV  BH, 0  ;select  background  color 
+    MOV  BL,7  ;background color 7,11,15 
+    INT	10H   
+     
+    call menudraw1
+   	
+	mov ax,0000h
+	int 33h
+
+	minp:
+	mov ax,0001h
+	int 33h
+	mov ax,0003h
+	int 33h
+	cmp bx,1
+	jne minp  
+	
+	mov mr,dx
+	mov mc,cx 
+	
+	mov ax,00002h
+	int 33h
+
+	MOV	AH,0CH		;write pixel
+	MOV	AL,7		;fg color
+	int 10h
+	xor ax,ax
+	
+	call menudraw1
+	
+	mov cx,mc
+	mov dx,mr
+	
+	cmp dx,130
+	ja pla1 
+	
+	jmp minp
+	
+	pla1:
+	cmp dx,170
+	jb pla2
+	
+	jmp minp
+	
+	pla2:
+	cmp cx,270
+	jb pla3
+	cmp cx,370
+	ja ex1
+	
+	jmp minp 
+	
+	ex1:
+	cmp cx,470
+	jb exgo 
+	jmp minp
+	
+	pla3:
+	cmp cx,170  
+	ja pla4 
+	jmp minp
+	
+	pla4:
+	call menudraw2
+	
+	mov bx,0
+	loop_d:
+	cmp bx,30
+	je minp2
+	call dela
+	inc bx
+	jmp loop_d 
+	
+	
+	minp2:
+    mov ax,0001h
+	int 33h
+	mov ax,0003h
+	int 33h 
+	cmp bx,1
+	jne minp2
+	
+	
+	mov mc,cx
+	mov mr,dx  
+	
+	
+	mov ax,0002h
+	int 33h
+	
+	call menudraw2  
+	
+	mov cx,mc
+	mov dx,mr  
+	          
+	cmp cx,270
+	jb pla11
+	
+	jmp minp2
+	
+	pla11: 
+	cmp cx,170  
+	ja pla22 
+	
+	jmp minp2
+	
+	pla22:
+	cmp dx,260
+	ja pla33
+	 
+	cmp dx,235
+	jb pla55
+	
+	jmp minp2
+	
+	pla33: 
+	cmp dx,300
+	jb pla44
+	 
+	jmp minp2
+	
+	pla44: 
+	mov first,1
+	jmp game22  
+	
+	pla55:
+	cmp dx,195
+	ja game11
+	
+	jmp minp2
+	
+	   
+	game22:
+	mov bx,0
+	loop_p:
+	cmp bx,50
+	je go3
+	call dela
+	inc bx
+	jmp loop_p
+	
+	
+	game11: 
+	mov bx,0
+	loop_g:
+	cmp bx,50
+	je menu2
+	call dela
+	inc bx
+	jmp loop_g
+	
+	
+	menu2:
+	 ;set to text mode
+	MOV	AX,3		;select mode 
+	INT	10H
+	
+	  mov AH, 0   ; graphics mode
+    mov AX, 12h
+    int 10h
+
+    MOV  AH, 11  ;function  OBh 
+    MOV  BH, 0  ;select  background  color 
+    MOV  BL,15  ;background color 7,11,15 
+    INT	10H 
+    
+    
+	xor dx,dx
+	xor cx,cx 
+     
+     mov dh,9
+     mov dl,25
+     mov ah,02h
+     mov bh,0
+     int 10h
+     mov si,0
+     mov colo,8
+     type11:
+     cmp sen1[si],36d
+	  je goff
+	  mov al,sen1[si] 
+     call write_all
+     inc si
+     jmp type11 
+     
+     goff:
+     call menudraw3 
+     
+     minp3:
+    mov ax,0001h
+	int 33h
+	mov ax,0003h
+	int 33h 
+	cmp bx,1
+	jne minp3
+	
+	
+	mov mc,cx
+	mov mr,dx  
+	
+	
+	mov ax,0002h
+	int 33h
+	
+	call menudraw3
+	
+	mov cx,mc
+	mov dx,mr
+	
+	cmp cx,200
+	ja who1
+	
+	jmp minp3
+	
+	who1:
+	cmp cx,300
+	jb who2
+	 
+	jmp minp3
+	
+	who2:
+	cmp dx,240
+	ja who3
+	
+	cmp dx,220
+	jb who4  
+	
+	jmp minp3
+	
+	who3:
+	cmp dx,280
+	jb comp1
+	jmp minp3
+	
+	who4:
+	cmp dx,180
+	ja UU
+	jmp minp3
+             
+    comp1:
+    mov first,2
+    jmp gogo
+    
+    UU:
+    mov first,0 
+    
+    gogo: 
+     mov bx,0
+	loop_gf:
+	cmp bx,50
+	je go3
+	call dela
+	inc bx
+	jmp loop_gf
+	
+
+     go3:
+	;set to text mode
+	MOV	AX,3		;select mode 
+	INT	10H
+    
+     
+    
+    game:
+    
+    mov count,1
+    mov output,0
+    mov win,0
+    mov valid,0
+    mov si,0 
+    mov cx,9
+    
+    myloop:
+    mov flag[si],0
+    add si,2
+    loop myloop
+    
+    mov AH, 0   ; graphics mode
+    mov AX, 12h
+    int 10h
+
+    MOV  AH, 11  ;function  OBh 
+    MOV  BH, 0  ;select  background  color 
+    MOV  BL,0  ;background color 7,11,15 
+    INT	10H  
+    
+    mov dh,0
+     mov dl,0
+     mov ah,02h
+     mov bh,0
+     int 10h
+     mov si,0
+     mov colo,4
+     ggexit:
+     cmp exs[si],36d
+	  je  drawline11
+	  mov al,exs[si] 
+     call write_all
+     inc si
+     jmp ggexit 
+     
+     
+     drawline11:
+;draw line
+	MOV	AH,0CH		;write pixel
+	MOV	AL,15		;fg color
+	
+	mov counter,560
+	MOV	CX,60		;beginning 
+	MOV	DX,160		;row
+    call line_horizontal  
+    
+    mov counter,560
+    mov cx,60
+    mov dx,162
+    call line_horizontal
+	                  
+    mov counter,560
+    mov cx,60
+    mov dx,300 
+    call line_horizontal 
+    
+    mov counter,560
+    mov cx,60
+    mov dx,302 
+    call line_horizontal
+             
+    mov counter,400
+    mov cx,226
+    mov dx,60
+    call line_vertical  
+    
+    mov counter,400
+    mov cx,228
+    mov dx,60
+    call line_vertical 
+    
+    mov counter,400
+    mov cx,392
+    mov dx,60
+    call line_vertical
+    
+    mov counter,400
+    mov cx,394
+    mov dx,60
+    call line_vertical 
+    
+mov cx,0
+mov dx,0  
+
+;mov ax,0000h
+;int 33h 
+        
+cmp first,2 ;
+je pcfirst        
+        
+input: 
+
+mov ax,0001h
+int 33h 
+
+mov ax,0003h
+int 33h
+cmp bx,1
+jne input
+
+mov ax,0002h
+int 33h
+
+MOV	AH,0CH		;write pixel
+MOV	AL,0 
+int 10h
+
+cmp dx,12
+jb goex 
+jmp gameplay
+
+goex:
+cmp cx,25
+jbe exgo 
+
+gameplay:
+cmp dx,300
+ja x
+
+cmp dx,160
+ja y
+
+cmp dx,60
+ja z
+
+cmp dx,60
+jb input
+
+
+x:
+cmp dx,400
+ja input
+mov si,12
+call check
+jmp check2
+
+y:
+cmp dx,300
+ja input
+mov si,6
+call check
+jmp check2
+
+z:
+cmp dx,160
+ja input 
+mov si,0
+call check
+jmp check2
+
+check2: 
+ 
+cmp valid,0
+je input
+         
+cmp first,1
+je anotherlook 
+
+
+cmp first,2
+je pcfirst
+
+cmp count,5
+jg out1
+
+cmp flag[si],0
+jne input 
+
+mov ax,02h
+int 33h
+
+mov flag[si],1h
+draw_cross r[si], clm[si] 
+
+cmp count,1
+je go_first_move 
+jmp loop1 
+
+go_first_move:
+call first_move 
+inc count
+jmp input
+
+
+loop1:
+call analyze0
+cmp win,0
+jne out1 
+cmp win,1
+je out1
+inc count
+mov output,0 
+call analyze1
+
+cmp output,1
+je input
+
+call analyze2
+
+cmp output,1
+je input
+         
+cmp count,5
+jg out1         
+call nobody_wins
+
+jmp input 
+
+
+anotherlook:
+
+
+cmp flag[si],0
+jne input 
+
+mov ax,02h
+int 33h 
+
+test count,01h
+jz rec
+
+mov flag[si],1h
+draw_cross r[si], clm[si] 
+
+call twopanalysis
+cmp win,0
+jne out1
+
+inc count
+
+cmp count,9
+jg out1
+jmp input 
+
+rec: 
+
+cmp count,9
+jg out1 
+
+mov flag[si],5  
+mov dx, r[si]
+mov row,dx
+mov dx,clm[si]
+mov column,dx 
+call rectangle 
+call twopanalysis
+cmp win,0
+jne out1
+inc count
+
+cmp count,9
+jg out1 
+jmp input
+
+
+pcfirst:
+cmp count,1
+jne pcfirst2
+call first_move
+inc count
+jmp input
+
+pcfirst2:
+
+cmp count,5
+jg out1
+cmp flag[si],0
+jne input
+
+mov ax,02h
+int 33h 
+
+mov flag[si],1h
+draw_cross r[si], clm[si] 
+ 
+call analyze0
+cmp win,0
+jne out1 
+cmp win,1
+je out1
+inc count
+mov output,0 
+call analyze1
+
+cmp output,1
+je input
+
+call analyze2
+
+cmp output,1
+je input         
+cmp count,5
+jg out1         
+call nobody_wins
+
+jmp input
+
+
+
+
+ out1:                                    
+;read keyboard
+	mov dx,0
+	myloop2:
+	call dela
+	inc dx
+	cmp dx,300
+	jne myloop2
+
+;set to text mode
+	MOV	AX,3		;select mode 
+	INT	10H
+
+;win_lose 
+    mov ah,0 
+	mov AX, 12h
+    	int 10h	
+ 
+	MOV  AH, 11  ;function  OBh 
+    MOV  BH, 0  ;select  background  color 
+    MOV  BL,7  ;background color 7,11,15 
+    INT	10H
+ 
+	
+	cmp first,1
+	je printres
+
+	cmp win,1
+	je ww
+	
+	cmp win,5 
+	je cww 
+	
+	cmp win,0
+	je tie
+	
+	ww:
+	
+	MOV	AH,0CH		;write pixel
+	MOV	AL,10		;fg color
+	int 10h  
+	 
+	mov row,100
+	mov column,150
+	call you
+	
+	mov row,220
+	mov column,150
+	call won
+	
+	mov row,101
+	mov column,151
+	call you
+	
+	mov row,221
+	mov column,151
+	call won
+	 
+	jmp go2
+	
+	cww:
+	
+	
+	MOV	AH,0CH		;write pixel
+	MOV	AL,4		;fg color
+	int 10h  
+	
+	mov row,100
+	mov column,150
+	call you
+	
+	mov row,220
+	mov column,130
+	call lost 
+	
+	mov row,101
+	mov column,151
+	call you
+	
+	mov row,221
+	mov column,131
+	call lost
+	
+	 
+	jmp go2
+	
+	tie:
+	
+	MOV	AH,0CH		;write pixel
+	MOV	AL,15		;fg color
+	int 10h  
+	
+	mov row,100
+	mov column,90
+	call itsa
+	
+	mov row,250
+	mov column,150
+	call tei 
+	
+	mov row,101
+	mov column,91
+	call itsa
+	
+	mov row,251
+	mov column,151
+	call tei
+	         
+    jmp go2
+    
+    
+printres:
+
+cmp win,1
+	je pl1
+	
+	cmp win,5 
+	je pl2 
+	
+	cmp win,0
+	je tie2
+	
+	
+pl1:
+
+	MOV	AH,0CH		;write pixel
+	MOV	AL,10		;fg color
+	int 10h  
+
+mov column,40
+mov row,60
+call player1
+mov column,41
+mov row,61
+call player1
+
+mov column,180
+mov row,180
+call one
+mov column,181
+mov row,181
+call one
+
+mov column,150
+mov row,300
+call won
+mov column,151
+mov row,301
+call won
+jmp go2
+        
+        
+pl2:
+	MOV	AH,0CH		;write pixel
+	MOV	AL,10		;fg color
+	int 10h          
+mov column,40
+mov row,60
+call player1
+mov column,41
+mov row,61
+call player1
+
+mov column,140
+mov row,180
+call two
+mov column,141
+mov row,181
+call two
+mov column,170
+mov row,300
+call won
+mov column,171
+mov row,301
+call won
+jmp go2
+
+tie2:    
+	MOV	AH,0CH		;write pixel
+	MOV	AL,15		;fg color
+	int 10h  
+
+mov row,100
+	mov column,90
+	call itsa
+	
+	mov row,250
+	mov column,150
+	call tei 
+	
+	mov row,101
+	mov column,91
+	call itsa
+	
+	mov row,251
+	mov column,151
+	call tei	    	         
+	
+			
+go2:
+	;read keyboard
+	;MOV	AH,0
+	;INT	16H
+	mov dx,0
+	myloop3:
+	call dela
+	inc dx
+	cmp dx,400
+	jne myloop3
+ 
+
+;set to text mode
+	MOV	AX,3		;select mode 
+	INT	10H 
+	
+	jmp menu 
+	
+exgo:
+      ;set to text mode
+	MOV	AX,3		;select mode 
+	INT	10H 
+	
+	
+;return to DOS
+	MOV	AH,4CH		;return
+	INT	21H		;to DOS
+MAIN	ENDP   
+
+
+check proc
+    
+mov valid, 0
+
+cmp cx,392
+ja a
+cmp cx,226
+ja b
+cmp cx,60
+ja g
+cmp cx,60
+jb out2
+
+a:
+cmp cx,560
+ja out2
+add si,4      
+mov valid,1
+jmp out2
+
+b:
+cmp cx,392
+ja out2
+mov valid,1
+add si,2
+jmp out2
+
+g:
+cmp cx,226
+ja out2 
+mov valid,1
+ret
+
+out2:
+ret
+check endp
+
+
+line_horizontal proc 
+    L1:
+    INT	10H		
+	INC	CX		    ;next 
+	CMP	CX,counter		
+;more columns?
+	JLE	L1
+	ret
+	line_horizontal endp  
+
+line_vertical proc
+    l3:
+    int 10h
+    inc dx
+    cmp dx,counter
+    jle l3 
+    ret
+    line_vertical endp   
+
+cross1 proc
+    mov counter, 0h
+    cross:
+    int 10h
+    inc cx
+    inc dx 
+    inc counter
+    cmp counter,70
+    jle cross
+    ret
+    cross1 endp  
+
+cross2 proc
+    mov counter, 0
+    jump:
+    int 10h
+    inc dx
+    dec cx
+    inc counter
+    cmp counter,70
+    jle jump
+    ret
+    cross2 endp
+                
+rectangle proc 
+    
+    MOV	AH,0CH		;write pixel
+	MOV	AL,15
+	int 10h
+	
+	mov dx,row
+	mov cx,column
+	mov counter,cx
+	add counter,100
+	call line_horizontal
+	
+	mov cx,column
+	mov dx,row
+	add dx,40
+	mov counter,cx
+	add counter,100
+	call line_horizontal
+	
+	mov cx,column
+	mov dx,row
+	mov counter,dx
+	add counter,40
+	call line_vertical
+	
+	mov cx,column
+	mov dx,row
+	add cx,100
+	mov counter,dx
+	add counter,40
+	call line_vertical
+    
+    ret
+    rectangle endp 
+
+first_move proc
+     
+    cmp si,8h
+    jne alternate
+    
+    MOV	AH,0CH		;write pixel
+	MOV	AL,3
+	int 10h
+	
+	mov row,75
+	mov column,270
+	call rectangle
+	
+	mov si,2h
+	mov flag[si],5    
+    jmp exit
+     
+    alternate:
+    
+    MOV	AH,0CH		;write pixel
+	MOV	AL,3
+	int 10h  
+    
+    mov row,195
+    mov column, 270
+    call rectangle 
+    
+    mov si,8h
+    mov flag[si],5
+	
+    exit:
+    ret
+    first_move endp 
+                    
+nobody_wins proc
+    
+    mov si,0
+    hudai:
+    cmp flag[si],0
+    je draw0 
+    cmp si,16
+    jg out3
+    add si,2
+    jmp hudai
+    
+    draw0:
+    mov dx,r[si]
+    mov row,dx
+    mov dx,clm[si]
+    mov column,dx
+    call rectangle
+    mov flag[si],5
+    
+    out3:
+    ret
+    nobody_wins endp
+                          
+work proc
+    
+    xor cx,cx
+    add cx,flag[si]
+    add si,adder
+    add cx, flag[si]
+    add si,adder
+    add cx,flag[si]
+    ret
+    work endp 
+
+work2 proc
+    
+    cmp flag[si],0
+    je draw
+    add si,adder
+    cmp flag[si],0
+    je draw
+    add si,adder
+    cmp flag[si],0
+    je draw
+    
+    jmp exits 
+    
+    draw:
+    mov dx,r[si]
+    mov row,dx
+    mov dx,clm[si]
+    mov column,dx
+    call rectangle
+    mov flag[si],5
+    mov output,1
+    
+    exits:
+    ret
+    work2 endp  
+
+twopanalysis proc 
+    
+    mov si,0h
+    mov adder,2
+    call work
+    cmp cx,3
+    je lose1
+    
+    mov si,6h
+    call work 
+    cmp cx,3
+    je lose1 
+    
+    mov si,0ch
+    call work 
+    cmp cx,3
+    je lose1
+    
+    mov si,0h
+    mov adder,6
+    call work 
+    cmp cx,3
+    je lose1 
+    
+    mov si,2h
+    call work
+    cmp cx,3
+    je lose1
+    
+    mov si,4h
+    call work
+    cmp cx,3
+    je lose1 
+    
+    mov si,0h
+    mov adder,8
+    call work 
+    cmp cx,3
+    je lose1 
+    
+    mov si,4h
+    mov adder,4
+    call work  
+    cmp cx,3
+    je lose1
+    
+    
+    mov si,0h
+    mov adder,2
+    call work
+    cmp cx,15
+    je lose2
+    
+    mov si,6h
+    call work 
+    cmp cx,15
+    je lose2 
+    
+    mov si,0ch
+    call work 
+    cmp cx,15
+    je lose2
+    
+    mov si,0h
+    mov adder,6
+    call work 
+    cmp cx,15
+    je lose2 
+    
+    mov si,2h
+    call work
+    cmp cx,15
+    je lose2
+    
+    mov si,4h
+    call work
+    cmp cx,15
+    je lose2 
+    
+    mov si,0h
+    mov adder,8
+    call work 
+    cmp cx,15
+    je lose2 
+    
+    mov si,4h
+    mov adder,4
+    call work  
+    cmp cx,15
+    je lose2
+    jmp ext 
+    
+    lose2:
+    mov win,5
+    jmp ext
+    
+    
+    
+    lose1:
+    mov win,1 
+    
+    ext:
+    ret
+    twopanalysis endp
+ 
+analyze1 proc     
+    
+    block1:
+    mov si,0h
+    mov adder,2
+    call work
+    cmp cx,2
+    jne block2
+    mov si,0
+    mov adder,2
+    call work2
+    jmp exit1 
+    
+    block2:
+    mov si,6h
+    mov adder,2
+    call work  
+    cmp cx,2
+    jne block3
+    mov si,6h
+    mov adder,2
+    call work2
+    jmp exit1
+    
+    block3:
+    mov si,0ch
+    mov adder,2
+    call work  
+    cmp cx,2
+    jne block4 
+    mov si,0ch
+    mov adder,2
+    call work2
+    jmp exit1  
+    
+    block4:
+    mov si,0h
+    mov adder,6
+    call work
+    cmp cx,2
+    jne block6
+    mov si,0h
+    mov adder,6
+    call work2
+    jmp exit1
+    
+    block6:
+    mov si,4h
+    mov adder,6
+    call work
+    cmp cx,2
+    jne block7
+    mov si,4h
+    mov adder,6
+    call work2
+    jmp exit1
+    
+    block7:
+    mov si,0h
+    mov adder,8
+    call work
+    cmp cx,2
+    jne block8
+    mov si,0h
+    mov adder,8
+    call work2
+    jmp exit1   
+    
+    block8:
+    mov si,4h
+    mov adder,4
+    call work
+    cmp cx,2
+    jne exit1
+    mov si,4h
+    mov adder,4
+    call work2
+    
+    exit1:
+    ret
+    analyze1 endp 
+    
+analyze2 proc
+    
+    block11:
+    mov si,0h
+    mov adder,2
+    call work
+    cmp cx,5
+    jne block22
+    mov si,0
+    mov adder,2
+    call work2
+    jmp exit2
+       
+    block22:
+    mov si,6h
+    mov adder,2
+    call work  
+    cmp cx,5
+    jne block33
+    mov si,6h
+    mov adder,2
+    call work2
+    jmp exit2
+        
+    block33:
+    mov si,0ch
+    mov adder,2
+    call work  
+    cmp cx,5
+    jne block44 
+    mov si,0ch
+    mov adder,2
+    call work2
+    jmp exit2
+    
+    block44:
+    mov si,0h
+    mov adder,6
+    call work
+    cmp cx,5
+    jne block55
+    mov si,0h
+    mov adder,6
+    call work2
+    jmp exit2
+    
+    block55:
+    mov si,2h
+    mov adder,6
+    call work
+    cmp cx,5
+    jne block66
+    mov si,2h
+    mov adder,6
+    call work2
+    jmp exit2
+    
+    block66:
+    mov si,4h
+    mov adder,6
+    call work
+    cmp cx,5
+    jne block77
+    mov si,4h
+    mov adder,6
+    call work2
+    jmp exit2
+    
+    block77:
+    mov si,0h
+    mov adder,8
+    call work
+    cmp cx,5
+    jne block88
+    mov si,0h
+    mov adder,8
+    call work2
+    jmp exit2   
+    
+    block88:
+    mov si,4h
+    mov adder,4
+    call work
+    cmp cx,5
+    jne exit2
+    mov si,4h
+    mov adder,4
+    call work2
+    
+    exit2:
+    ret
+    analyze2 endp 
+    
+analyze0 proc 
+    
+    mov si,0h
+    mov adder,2
+    call work
+    cmp cx,3
+    je lose
+    
+    mov si,6h
+    mov adder,2
+    call work 
+    cmp cx,3
+    je lose 
+    
+    mov si,0ch
+    mov adder,2
+    call work 
+    cmp cx,3
+    je lose
+    
+    mov si,0h
+    mov adder,6
+    call work 
+    cmp cx,3
+    je lose 
+    
+    mov si,2h
+    mov adder,6
+    call work
+    cmp cx,3
+    je lose
+    
+    mov si,4h
+    mov adder,6
+    call work
+    cmp cx,3
+    je lose 
+    
+    mov si,0h
+    mov adder,8
+    call work 
+    cmp cx,3
+    je lose 
+    
+    mov si,4h
+    mov adder,4
+    call work  
+    cmp cx,3
+    je lose
+       
+    block111:
+    mov si,0h
+    mov adder,2
+    call work
+    cmp cx,10
+    jne block222
+    mov si,0
+    cmp flag[si],0
+    je draw22
+    add si,2
+    cmp flag[si],0
+    je draw22
+    add si,2
+    cmp flag[si],0
+    je draw22
+    
+    
+    block222:
+    mov si,6h
+    mov adder,2
+    call work 
+    cmp cx,10
+    jne block333
+    mov si,6h
+    cmp flag[si],0
+    je draw22
+    add si,2
+    cmp flag[si],0
+    je draw22
+    add si,2
+    cmp flag[si],0
+    je draw22
+    
+    
+    block333:
+    mov si,0ch
+    mov adder,2
+    call work  
+    cmp cx,10
+    jne block444 
+    mov si,0ch
+    cmp flag[si],0
+    je draw22
+    add si,2
+    cmp flag[si],0
+    je draw22
+    add si,2
+    cmp flag[si],0
+    je draw22 
+    
+    block444:
+    
+    mov si,0h
+    mov adder,6
+    call work 
+    cmp cx,10
+    jne block555
+    mov si,0h
+    cmp flag[si],0
+    je draw22
+    add si,6
+    cmp flag[si],0
+    je draw22
+    add si,6
+    cmp flag[si],0
+    je draw22
+    
+    block555:
+    mov si,2h
+    mov adder,6
+    call work
+    cmp cx,10
+    jne block666
+    mov si,2h
+    cmp flag[si],0
+    je draw22
+    add si,6
+    cmp flag[si],0
+    je draw22
+    add si,6
+    cmp flag[si],0
+    je draw22
+    
+    block666:
+    mov si,4h
+    mov adder,6
+    call work
+    cmp cx,10
+    jne block777
+    mov si,4h
+    cmp flag[si],0
+    je draw22
+    add si,6
+    cmp flag[si],0
+    je draw22
+    add si,6
+    cmp flag[si],0
+    je draw22
+    
+    block777:
+    mov si,0h
+    mov adder,8
+    call work 
+    cmp cx,10
+    jne block888
+    mov si,0h
+    cmp flag[si],0
+    je draw22
+    add si,8
+    cmp flag[si],0
+    je draw22
+    add si,8
+    cmp flag[si],0
+    je draw22
+    
+    block888:
+    mov si,4h
+    mov adder,4
+    call work  
+    cmp cx,10
+    jne exit3
+    mov si,4h
+    cmp flag[si],0
+    je draw22
+    add si,4
+    cmp flag[si],0
+    je draw22
+    add si,4
+    cmp flag[si],0
+    je draw22 
+    
+    draw22:
+    mov dx,r[si]
+    mov row,dx
+    mov dx,clm[si]
+    mov column,dx
+    call rectangle
+    mov flag[si],5
+    mov win,5 
+    jmp exit3
+            
+    lose:
+    mov win,1         
+             
+    exit3:
+    ret
+    analyze0 endp  
+    
+    write_all proc
+    mov ah,09h
+	mov bh,0
+	mov bl,colo
+	mov cx,1
+	int 10h
+	inc dl
+    mov ah,02h 
+    mov bh,0
+	int 10h
+
+	ret
+	write_all endp   
+    
+    
+tick proc
+    MOV	AH,0CH		;write pixel
+	MOV	AL,3 
+	
+	
+	T:
+    mov cx,column ;column dao
+    mov dx,row ;row dao
+    mov counter,cx  ; column
+    add counter,110 ; width
+    call line_horizontal 
+    
+    mov cx,column
+    add cx,55
+    mov dx,row
+    mov counter,dx
+    add counter,100   ;length
+    call line_vertical 
+    
+    
+    I:  
+    mov dx,row
+    mov cx,column
+    add cx,150
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    mov column,cx 
+    add column,50
+    C1:    
+    add cx,50
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    mov counter,cx
+    add counter,70
+    call line_horizontal 
+    
+    K:
+    add cx,40
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    add cx,70
+    mov dx,row
+    call cross2
+    
+    mov dx,row
+    add dx,32
+    call cross1 
+    
+    ret
+    
+    tick endp
+
+tack proc
+    
+    MOV	AH,0CH		;write pixel
+	MOV	AL,3 
+	
+	T1:
+    mov cx,column ;column dao
+    mov dx,row ;row dao
+    mov counter,cx  ; column
+    add counter,110 ; width
+    call line_horizontal 
+    
+    mov cx,column
+    add cx,55
+    mov dx,row
+    mov counter,dx
+    add counter,100   ;length
+    call line_vertical 
+    
+    mov column,cx
+    add column,90 
+    
+    A1:
+    mov dx,row
+    mov cx,column
+    mov counter,cx
+    add counter,80
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    add cx,80
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    
+    mov cx,column
+    mov dx,row
+    add dx,50
+    mov counter,cx
+    add counter,80
+    call line_horizontal  
+    
+    mov column,cx 
+    add column,40
+    C2:    
+    add cx,40
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    k2:
+    add cx,35
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    add cx,70
+    mov dx,row
+    call cross2
+    
+    mov dx,row
+    add dx,30
+    call cross1
+     
+    
+    ret
+    tack endp
+
+toe proc
+     MOV	AH,0CH		;write pixel
+	MOV	AL,3 
+	
+	
+	T2:
+    mov cx,column ;column dao
+    mov dx,row ;row dao
+    mov counter,cx  ; column
+    add counter,110 ; width
+    call line_horizontal 
+    
+    mov cx,column
+    add cx,55
+    mov dx,row
+    mov counter,dx
+    add counter,100   ;length
+    call line_vertical 
+    
+    mov column,cx
+    add column,90
+    
+    
+    O:
+    mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    add dx,100
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    add cx,70
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical  
+    
+    E:
+    add cx,40
+    mov column,cx
+    mov counter,cx
+    add counter,70
+    mov dx,row
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    
+    ret
+    toe endp    
+
+river proc
+    MOV cx,0
+    
+    MOV AL,1111b
+    LP1:
+    MOV dX,uprow
+    CMP cX,641
+    JE exit121
+    INC cX
+    LP2:
+    CMP dX,drow
+    JE LP1
+    MOV  AH,0CH	
+	INT  10H 
+	INC dX
+	JMP LP2 
+     
+    exit121:  
+    ret 
+    river endp
+	          
+dela proc
+    mov cx,0
+	come:
+	cmp cx,1000
+	je come2
+	inc cx
+	jmp come
+	
+	come2:
+	xor cx,cx
+	
+	come3:
+	cmp cx,1000
+	je exit12
+	inc cx
+	jmp come3
+    exit12:
+    ret
+    dela endp
+
+
+you proc
+    
+    Y3:
+    mov cx,column
+    mov dx,row
+    sub dx,30
+    mov counter,dx
+    add counter,30
+    call line_vertical
+    
+    mov dx,row 
+    sub dx,30
+    mov counter,dx
+    add counter,30
+    add cx,100
+    call line_vertical
+    
+    
+    sub cx,50
+    mov dx,row
+    mov counter,dx
+    add counter,70
+    call line_vertical
+    
+    
+    mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,100
+    call line_horizontal   
+    
+    
+    add cx,30
+    mov column,cx 
+    sub row,30
+    
+    Oo:
+    
+    mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    add dx,100
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    add cx,70
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical  
+    
+    
+    add column,110
+    U:
+    
+    mov cx,column
+    mov dx,row
+    add dx,100
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    add cx,70
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    ret
+    you endp 
+
+
+won proc
+        
+    W:
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    mov dx,row 
+    mov counter,dx
+    add counter,100
+    add cx,100
+    call line_vertical 
+    
+    sub cx,30
+    mov dx,row
+    add dx,30
+    call cross2
+
+    sub dx,70
+    mov cx,column
+    add cx,30
+    call cross1 
+    
+    
+    add cx,30
+    mov column,cx
+    
+    O2:
+     
+    mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    add dx,100
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    add cx,70
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    
+    add cx,30
+    mov column,cx
+    N:
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    mov cx,column
+    mov dx,row 
+    add cx,100
+    mov counter,dx
+    add counter,100
+    call line_vertical
+     
+    mov cx,column
+    mov dx,row
+    call cross1
+    
+    sub cx,40
+    sub dx,40
+    call cross1                     
+                         
+    
+    
+    ret
+    won endp 
+
+
+
+lost proc 
+    
+    L:
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    mov counter,cx
+    add counter,70
+    call line_horizontal 
+    
+    
+    add cx,30
+    mov column,cx
+    O3:
+    mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    add dx,100
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    add cx,70
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical  
+    
+    add cx,30
+    mov column,cx
+    
+    S: 
+    
+    mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+                             
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,50
+    call line_vertical
+    
+    
+    add cx,70
+    mov counter,dx
+    add counter,50
+    call line_vertical 
+    
+    
+    add cx,30
+    mov column,cx
+    T3: 
+     mov cx,column ;column dao
+    mov dx,row ;row dao
+    mov counter,cx  ; column
+    add counter,110 ; width
+    call line_horizontal 
+    
+    mov cx,column
+    add cx,55
+    mov dx,row
+    mov counter,dx
+    add counter,100   ;length
+    call line_vertical 
+    
+    ret
+    lost endp 
+
+
+itsa proc
+    
+    i1:
+    mov dx,row
+    mov cx,column
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    t4:
+    add column,25
+    mov cx,column ;column dao
+    mov dx,row ;row dao
+    mov counter,cx  ; column
+    add counter,110 ; width
+    call line_horizontal 
+    
+    mov cx,column
+    add cx,55
+    mov dx,row
+    mov counter,dx
+    add counter,100   ;length
+    call line_vertical 
+    
+    add cx,65
+    mov dx,row
+    sub dx,10
+    mov counter,dx
+    add counter,20
+    call line_vertical 
+    
+    add cx,30
+    mov column,cx
+    s1:
+    
+     mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+                             
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,50
+    call line_vertical
+    
+    
+    add cx,70
+    mov counter,dx
+    add counter,50
+    call line_vertical 
+    
+    add cx,90
+    mov column,cx  
+    
+    a2:
+    mov dx,row
+    mov cx,column
+    mov counter,cx
+    add counter,80
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    add cx,80
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    
+    mov cx,column
+    mov dx,row
+    add dx,50
+    mov counter,cx
+    add counter,80
+    call line_horizontal
+    
+    ret
+    itsa endp  
+
+
+tei proc
+    
+    
+	T5:
+    mov cx,column ;column dao
+    mov dx,row ;row dao
+    mov counter,cx  ; column
+    add counter,110 ; width
+    call line_horizontal 
+    
+    mov cx,column
+    add cx,55
+    mov dx,row
+    mov counter,dx
+    add counter,100   ;length
+    call line_vertical 
+    
+    mov column,cx
+    add column,90
+    i12:
+    mov dx,row
+    mov cx,column
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    add cx,40
+    mov column,cx
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    mov dx,row
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    
+    ret
+    tei endp
+
+player1 proc
+    
+    P:
+    mov dx,row
+    mov cx,column
+    mov counter,cx
+    add counter,80
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    add cx,80
+    mov dx,row
+    mov counter,dx
+    add counter,50
+    call line_vertical
+    
+    mov cx,column
+    mov dx,row
+    add dx,50
+    mov counter,cx
+    add counter,80
+    call line_horizontal  
+    
+    mov column,cx 
+    add column,20 
+    
+    Ll:
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    mov counter,cx
+    add counter,70
+    call line_horizontal 
+    
+    add cx,10
+    mov column,cx 
+    
+    
+    aa:
+     mov dx,row
+    mov cx,column
+    mov counter,cx
+    add counter,80
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    add cx,80
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    mov cx,column
+    mov dx,row
+    add dx,50
+    mov counter,cx
+    add counter,80
+    call line_horizontal  
+    
+    mov column,cx 
+    add column,20
+    add row,30 
+    
+    yy:
+    mov cx,column
+    mov dx,row
+    sub dx,30
+    mov counter,dx
+    add counter,30
+    call line_vertical
+    
+    mov dx,row 
+    sub dx,30
+    mov counter,dx
+    add counter,30
+    add cx,100
+    call line_vertical
+    
+    sub cx,50
+    mov dx,row
+    mov counter,dx
+    add counter,70
+    call line_vertical
+    
+    mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,100
+    call line_horizontal   
+    
+    add cx,20
+    mov column,cx 
+    sub row,30
+    
+    ee:
+    mov column,cx
+    mov counter,cx
+    add counter,70
+    mov dx,row
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+                       
+    add column,100
+    rr:
+    mov dx,row
+    mov cx,column
+    mov counter,cx
+    add counter,80
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    add cx,80
+    mov dx,row
+    mov counter,dx
+    add counter,40
+    call line_vertical
+    
+    mov cx,column
+    mov dx,row
+    add dx,40
+    mov counter,cx
+    add counter,80
+    call line_horizontal  
+    
+    mov cx,column
+    call cross1
+    
+    
+    ret
+    player1 endp  
+    
+one proc 
+    
+    
+    mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    add dx,100
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    add cx,70
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    
+    add cx,30
+    mov column,cx
+    Nn:
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    mov cx,column
+    mov dx,row 
+    add cx,100
+    mov counter,dx
+    add counter,100
+    call line_vertical
+     
+    mov cx,column
+    mov dx,row
+    call cross1
+    
+    sub cx,40
+    sub dx,40
+    call cross1
+    
+    
+    add cx,20
+    mov column,cx
+    
+    e0:
+    mov counter,cx
+    add counter,70
+    mov dx,row
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov counter,cx
+    add counter,70
+    add dx,50
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    
+    ret
+    one endp 
+
+two proc
+    
+    mov cx,column 
+    mov dx,row 
+    mov counter,cx  
+    add counter,110 
+    call line_horizontal 
+    
+    mov cx,column
+    add cx,55
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    mov column,cx
+    add column,90 
+    
+    
+    ;w
+    
+     mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    mov dx,row 
+    mov counter,dx
+    add counter,100
+    add cx,100
+    call line_vertical 
+    
+    sub cx,30
+    mov dx,row
+    add dx,30
+    call cross2
+
+    sub dx,70
+    mov cx,column
+    add cx,30
+    call cross1 
+    
+    
+    add cx,40
+    mov column,cx 
+    
+    ;o
+    
+    mov cx,column
+    mov dx,row
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    add dx,100
+    mov counter,cx
+    add counter,70
+    call line_horizontal
+    
+    mov cx,column
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical
+    
+    add cx,70
+    mov dx,row
+    mov counter,dx
+    add counter,100
+    call line_vertical 
+    
+    ret
+    two endp    
+
+    menudraw1 proc 
+        
+       mov row,130
+     mov column,170
+     call rectangle
+     
+     mov row,130
+     mov column,370
+     call rectangle
+
+	call dela
+	call dela
+     
+	xor dx,dx
+	xor cx,cx 
+     
+     mov dh,9
+     mov dl,25
+     mov ah,02h
+     mov bh,0
+     int 10h
+     mov si,0
+     mov colo,10
+     pric1:
+     cmp ps[si],36d
+	  je wex
+	  mov al,ps[si] 
+     call write_all
+     inc si
+     jmp pric1 
+	
+     wex:
+	 mov dh,9
+     mov dl,50
+     mov ah,02h
+     mov bh,0
+     int 10h
+     mov si,0
+     mov colo,4
+
+     pric2:
+     cmp exs[si],36d
+	  je exit 
+	  mov al,exs[si] 
+     call write_all
+     inc si
+     jmp pric2
+ 
+     
+    exit: 
+    ret 
+    menudraw1 endp    
+    
+    
+    
+    menudraw2 proc
+        
+            mov row,195
+     mov column,170
+     call rectangle
+     
+     mov row,260
+     mov column,170
+     call rectangle
+
+	call dela
+	call dela
+     
+	xor dx,dx
+	xor cx,cx 
+     
+     mov dh,13
+     mov dl,24
+     mov ah,02h
+     mov bh,0
+     int 10h
+     mov si,0
+     mov colo,9
+     pric1:
+     cmp p1[si],36d
+	  je wex
+	  mov al,p1[si] 
+     call write_all
+     inc si
+     jmp pric1 
+	
+     wex:
+	 mov dh,17
+     mov dl,24
+     mov ah,02h
+     mov bh,0
+     int 10h
+     mov si,0
+     mov colo,5
+
+     pric2:
+     cmp p2[si],36d
+	  je exit 
+	  mov al,p2[si] 
+     call write_all
+     inc si
+     jmp pric2
+      
+      
+    exit:    
+    ret 
+    menudraw2 endp 
+    
+    
+    menudraw3 proc
+        
+     mov row,180
+     mov column,200
+     call rectangle
+     
+     mov row,240
+     mov column,200
+     call rectangle
+
+	call dela
+	call dela
+     
+	xor dx,dx
+	xor cx,cx 
+     
+     mov dh,12
+     mov dl,29
+     mov ah,02h
+     mov bh,0
+     int 10h
+     mov si,0
+     mov colo,9
+     pric1:
+     cmp sen2[si],36d
+	  je wex
+	  mov al,sen2[si] 
+     call write_all
+     inc si
+     jmp pric1 
+	
+     wex:
+	 mov dh,16
+     mov dl,27
+     mov ah,02h
+     mov bh,0
+     int 10h
+     mov si,0
+     mov colo,5
+
+     pric2:
+     cmp sen3[si],36d
+	  je exit 
+	  mov al,sen3[si] 
+     call write_all
+     inc si
+     jmp pric2
+      
+      
+    exit:    
+    ret 
+    menudraw3 endp
+
+    
+	END	MAIN
